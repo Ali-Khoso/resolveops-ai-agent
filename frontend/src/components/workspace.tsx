@@ -59,7 +59,7 @@ export default function Workspace() {
   }, [refresh, router]);
 
   useEffect(() => {
-    if (!selectedTicket) { setMessages([]); return; }
+    if (!selectedTicket) return;
     let active = true;
     listMessages(selectedTicket).then(r => {if (active) setMessages(r.items);}).catch(e => {if(active) setError(e instanceof Error ? e.message : "Message load failed");});
     return () => {active=false;};
@@ -132,7 +132,7 @@ export default function Workspace() {
           <label>Priority<select value={priority} onChange={e=>setPriority(e.target.value)}><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
           <button className="primarybtn" disabled={busy || customers.length===0} type="submit">Create ticket</button>
         </form>
-        <div className="secure-list">{tickets.map(t=><div key={t.id} className="secure-list-row ticket-row"><button type="button" onClick={()=>setSelectedTicket(t.id)} className={selectedTicket===t.id ? "selected" : ""}><strong>{t.subject}</strong><small>{t.status.replace("_"," ")} · {t.priority}</small></button><select aria-label={`Status for ${t.subject}`} value={t.status} disabled={busy} onChange={e=>void action(async()=>{await changeTicketStatus(t.id,e.target.value);})}><option value="open">Open</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></div>)}{tickets.length===0 && <p className="muted">No tickets yet.</p>}</div>
+        <div className="secure-list">{tickets.map(t=><div key={t.id} className="secure-list-row ticket-row"><button type="button" onClick={()=>{setSelectedTicket(t.id);setMessages([]);}} className={selectedTicket===t.id ? "selected" : ""}><strong>{t.subject}</strong><small>{t.status.replace("_"," ")} · {t.priority}</small></button><select aria-label={`Status for ${t.subject}`} value={t.status} disabled={busy} onChange={e=>void action(async()=>{await changeTicketStatus(t.id,e.target.value);})}><option value="open">Open</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></div>)}{tickets.length===0 && <p className="muted">No tickets yet.</p>}</div>
       </section>
       <section className="panel secure-panel"><div className="panelheader"><div><h2>Ticket conversation</h2><p>Internal agent notes for selected ticket</p></div><MessageSquare size={18}/></div>
         {!selectedTicket && <p className="muted secure-tip">Select a support ticket to view or add its messages.</p>}
