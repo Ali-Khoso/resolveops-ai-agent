@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Activity, ArrowRight, Bot, CircleHelp, ClipboardList, Database, Headphones, LayoutDashboard, MessageSquare, Package, Send, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
 import { fetchHealth, fetchOrders, sendMessage, type Health, type Order } from "@/lib/api";
 
@@ -48,7 +49,7 @@ export default function SupportWorkspace() {
           <div className="navitem active"><LayoutDashboard size={17}/>Overview</div>
           <div className="navitem"><MessageSquare size={17}/>AI Assistant</div>
           <div className="navitem"><Package size={17}/>Orders</div>
-          <div className="navitem"><ClipboardList size={17}/>Tickets <span style={{fontSize:10,marginLeft:"auto",opacity:.6}}>Phase 2</span></div>
+          <Link className="navitem" href="/workspace"><ClipboardList size={17}/>Private Workspace</Link>
           <div className="navlabel" style={{marginTop:30}}>COMING NEXT</div>
           <div className="navitem"><Database size={17}/>Knowledge base</div>
           <div className="navitem"><ShieldCheck size={17}/>Approvals</div>
@@ -62,7 +63,7 @@ export default function SupportWorkspace() {
         </div>
         <div className="headingrow">
           <div><div className="eyebrow">OPERATIONS OVERVIEW</div><h1>Support Command Center</h1><div className="muted">Investigate orders, test AI tools and prepare the next phase.</div></div>
-          <span className="chip">Phase 1 · Demo store</span>
+          <Link className="chip" href="/login">Sign in to Phase 2</Link>
         </div>
         <div className="cards">
           <div className="card"><div className="cardtop"><span className="smalllabel">Demo orders</span><span className="iconbox"><Package size={16}/></span></div><div className="metric">{orders.length || "—"}</div><div className="metricmeta">Fictional records only</div></div>
