@@ -31,7 +31,7 @@ class PolicyChunk:
 
 def sanitized_filename(filename: str | None) -> tuple[str, str]:
     name = PurePosixPath((filename or "").replace(chr(92), "/")).name
-    name = re.sub(r"[\\x00-\\x1f\\x7f]", "", name).strip()
+    name = re.sub(r"[\x00-\x1f\x7f]", "", name).strip()
     if not name or len(name) > 180 or name.startswith("."):
         raise HTTPException(status_code=422, detail="Invalid document filename")
     extension = "." + name.rsplit(".", 1)[-1].lower() if "." in name else ""

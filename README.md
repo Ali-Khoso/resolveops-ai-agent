@@ -76,3 +76,14 @@ For Supabase functionality add the URL and publishable key to **both** `.env` fi
 7. Monitoring, deployment, security hardening and evaluations — planned
 
 **License:** MIT. Do not use personal or live business data until the remaining authorization, security and compliance work is complete.
+
+## Phase 3 — private company-policy RAG
+
+- Authenticated **Knowledge Base** at `/knowledge`.
+- PDF (text-based), Markdown and TXT upload; LangChain chunking with PDF page citations.
+- Gemini `gemini-embedding-001` (768-dimensional vectors) with Supabase pgvector.
+- Per-user Postgres RLS and **SECURITY INVOKER** semantic search RPC.
+- LangChain/Gemini answers with retrieved source excerpts, citation checks and abstention.
+- Full setup and test guide: [Phase 3 setup](docs/PHASE3_SETUP.md).
+
+Run `supabase/migrations/202611090001_phase3_knowledge_rag.sql` after the Phase 2 migration. Then add your **private** `GOOGLE_API_KEY` to `backend/.env`. Do not commit your credentials. Live Google/Supabase checks require your configured project.
