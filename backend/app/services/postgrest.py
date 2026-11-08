@@ -6,7 +6,8 @@ from fastapi import HTTPException
 
 from app.core.supabase import CurrentUser, get_config
 
-TABLES = frozenset({"profiles", "customers", "orders", "tickets", "ticket_messages"})
+TABLES = frozenset({"profiles", "customers", "orders", "tickets", "ticket_messages", "knowledge_documents", "knowledge_chunks"})
+RPC_FUNCTIONS = frozenset({"match_policy_chunks"})
 
 
 async def query(
@@ -15,7 +16,7 @@ async def query(
     *,
     method: Literal["GET", "POST", "PATCH", "DELETE"] = "GET",
     params: dict[str, str | int] | None = None,
-    data: dict[str, Any] | None = None,
+    data: dict[str, Any] | list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Return only end-user-authorized rows. Never accept table names from URLs."""
     if table not in TABLES:
@@ -55,3 +56,28 @@ async def query(
 
 def owner_filter(user: CurrentUser, **filters: str | int) -> dict[str, str | int]:
     return {"owner_id": f"eq.{user.id}", **filters}
+
+async def rpc(user: CurrentUser, function_name: str, payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Allowlisted, user-scoped Supabase RPC; always forward the verified end-user JWT."""
+    if function_name not in RPC_FUNCTIONS:
+        raise ValueError("Unknown RPC function")
+    settings = get_config()
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.post(
+                f"{settings.url}/rest/v1/rpc/{function_name}",
+                headers={"apikey": settings.publishable_key,
+                         "Authorization": f"Bearer {user.access_token}",
+                         "Content-Type": "application/json"},
+                json=payload,
+            )
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=503, detail="Knowledge search temporarily unavailable") from exc
+    if response.status_code in (401, 403):
+        raise HTTPException(status_code=403, detail="Knowledge search access denied")
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail="Knowledge search failed")
+    rows = response.json()
+    if not isinstance(rows, list):
+        raise HTTPException(status_code=502, detail="Unexpected knowledge search response")
+    return rows
