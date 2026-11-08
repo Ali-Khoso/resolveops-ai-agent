@@ -103,7 +103,7 @@ export default function Workspace() {
   }
 
   return <main className="secure-workspace">
-    <header className="secure-header"><div className="auth-brand"><span className="brandmark"><Sparkles size={17}/></span><b>ResolveOps</b><span className="chip">Secure workspace</span></div><div className="headerlinks"><Link href="/"><ArrowLeft size={15}/> Demo dashboard</Link><button type="button" onClick={()=>void logout()}><LogOut size={15}/> Sign out</button></div></header>
+    <header className="secure-header"><div className="auth-brand"><span className="brandmark"><Sparkles size={17}/></span><b>ResolveOps</b><span className="chip">Secure workspace</span></div><div className="headerlinks"><Link href="/knowledge"><Database size={15}/> Knowledge Base</Link><Link href="/"><ArrowLeft size={15}/> Demo dashboard</Link><button type="button" onClick={()=>void logout()}><LogOut size={15}/> Sign out</button></div></header>
     <section className="secure-intro"><div className="eyebrow">CUSTOMER SUPPORT OPERATIONS</div><h1>{name ? `Welcome, ${name}` : "Private workspace"}</h1><p className="muted">Your customer data is protected by signed-in access and Postgres row-level security. Use synthetic sample data for testing.</p></section>
     {loading && <div className="notice" role="status">Loading your workspace...</div>}
     {error && <div className="notice error" role="alert">{error}</div>}
