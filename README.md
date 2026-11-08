@@ -1,21 +1,20 @@
-# ResolveOps AI Agent
+# ResolveOps — AI Support & Order Resolution Platform
 
-A practical AI support operations starter built with **FastAPI**, **LangChain**, **Gemini**, and **Next.js**. Phase 1 uses **fictional orders** and a clearly marked deterministic demo mode so the entire request flow is testable without credentials.
+Production-minded portfolio application for a support operations team: FastAPI, LangChain/Gemini, Next.js, Supabase Auth + Postgres + RLS, and testable API workflows.
 
-> **Phase 1 only.** No authentication, production database, real refunds, payment actions, or live customer integrations are implemented. Do not deploy with real customer data.
+**Status:** Phase 1 demo and Phase 2 authenticated-workspace implementation are in the repository. Phase 3 (company-policy RAG) and subsequent LangGraph workflows are not implemented.
 
-## Features
+## What you can do
 
-- Order lookup using safe, read-only tools (`1001`, `1002`, `1003`).
-- FastAPI health, orders, and chat endpoints with input validation.
-- LangChain `create_agent` with a Gemini tool-calling path, enabled explicitly.
-- Credential-free, deterministic demo mode for local testing.
-- Next.js App Router support dashboard with interactive chat.
-- Offline tests and an automated GitHub Actions backend test job.
+- **Public Phase 1 demo (`/`):** ask about three fictional orders in offline demo mode, or optionally enable LangChain/Gemini tool calling with a private key.
+- **Private Phase 2 workspace (`/login` → `/workspace`):** email/password signup and login through Supabase; create and review customers, orders and support tickets; change ticket status; write internal notes.
+- **REST APIs:** token verification against Supabase Auth, user-scoped PostgREST access, request validation, pagination and RLS.
+- **PostgreSQL migration:** `supabase/migrations/202611070001_phase2_workspaces.sql` creates tables, profile signup trigger, composite ownership checks and RLS policies.
+- **Tests:** backend checks work without cloud credentials; GitHub Actions runs `pytest` in demo mode.
 
-## Run locally (Windows PowerShell)
+## Quick start
 
-Clone the repository, open the `resolveops-ai-agent` folder in VS Code, then open two terminals.
+Read **[docs/PHASE2_SETUP.md](docs/PHASE2_SETUP.md)** for exact URLs, key locations, database migration, VS Code commands and API routes.
 
 ```powershell
 git clone https://github.com/Ali-Khoso/resolveops-ai-agent.git
@@ -23,20 +22,19 @@ cd resolveops-ai-agent
 code .
 ```
 
-**Terminal 1 — backend**
+Backend (terminal 1):
 
 ```powershell
 cd backend
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 Copy-Item .env.example .env
+python -m pytest -q
 python -m uvicorn app.main:app --reload
 ```
 
-If `py -3.11` is unavailable, use `py -3.12` or `py -3.13`. FastAPI Swagger: http://127.0.0.1:8000/docs . Test with `python -m pytest` from `backend`.
-
-**Terminal 2 — frontend**
+Frontend (terminal 2):
 
 ```powershell
 cd frontend
@@ -45,34 +43,47 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. Use Node.js **20.9+**.
+For Supabase functionality add the URL and publishable key to **both** `.env` files and run the migration. Without credentials, the Phase 1 demo still works; `/workspace` does not silently bypass authentication.
 
-## Enable the actual AI agent
+## Security boundaries
 
-1. Create a Gemini API key in Google AI Studio.
-2. Edit **only** `backend/.env`:
+- Phase 2 backend accepts an **end-user token** and validates it through Supabase Auth, then forwards the token to PostgREST so RLS can enforce row ownership.
+- The secret/service-role key is **not needed** and must not be added to this project.
+- Each user can see only their own records. Cross-user/cross-customer relationships are prohibited by composite FKs.
+- Ticket messages are internal agent notes; AI cannot issue refunds, write messages or modify real orders yet.
+- User-created records require authentication; public Phase 1 endpoints return **only synthetic** orders.
+- These are portfolio/demo safeguards, not a complete production security review.
 
-```dotenv
-AGENT_MODE=ai
-GOOGLE_API_KEY=your_actual_key
-GEMINI_MODEL=gemini-2.5-flash-lite
-```
+## Folder layout
 
-3. Restart FastAPI. **Never commit your `.env` or publish API keys.** Gemini API quotas and pricing depend on your account. Without a key, keep `AGENT_MODE=demo`.
+- `backend/app/api/` — FastAPI public demo and authenticated workspace routes
+- `backend/app/core/supabase.py` — token verification + configuration
+- `backend/app/services/postgrest.py` — user-token database transport
+- `backend/app/models/workspace.py` — strict request schemas
+- `backend/app/agents/` and `backend/app/tools/` — LangChain demo agent and order tool
+- `frontend/src/app/login/` and `frontend/src/app/workspace/` — Phase 2 UI
+- `supabase/migrations/` — SQL schema, roles and RLS
+- `docs/` — setup, architecture, and roadmap
 
-## Useful endpoints
+## Upcoming phases
 
-- `GET /health` — service health and active mode.
-- `GET /api/v1/orders` — fictional sample orders.
-- `GET /api/v1/orders/1001` — one order.
-- `POST /api/v1/agent/chat` — JSON `{"message": "Where is order 1001?"}`.
+1. Foundation and demo tool-calling — ✅ implemented
+2. Supabase database, authentication, customer/order/ticket CRUD — ✅ code implemented; needs your Supabase project setup
+3. Knowledge base and grounded RAG — planned
+4. LangGraph agent workflows — planned
+5. Human approval and ticket automation — planned
+6. Professional dashboard refinements and advanced UX — planned
+7. Monitoring, deployment, security hardening and evaluations — planned
 
-The demo agent intentionally does **not** process refunds, update orders, or claim to know live shipment status.
+**License:** MIT. Do not use personal or live business data until the remaining authorization, security and compliance work is complete.
 
-## Phase 2 onward
+## Phase 3 — private company-policy RAG
 
-Supabase authentication and per-customer authorization, PostgreSQL orders/tickets, RAG over policies, LangGraph approvals and audit logs. See `docs/ROADMAP.md` and `docs/ARCHITECTURE.md`.
+- Authenticated **Knowledge Base** at `/knowledge`.
+- PDF (text-based), Markdown and TXT upload; LangChain chunking with PDF page citations.
+- Gemini `gemini-embedding-001` (768-dimensional vectors) with Supabase pgvector.
+- Per-user Postgres RLS and **SECURITY INVOKER** semantic search RPC.
+- LangChain/Gemini answers with retrieved source excerpts, citation checks and abstention.
+- Full setup and test guide: [Phase 3 setup](docs/PHASE3_SETUP.md).
 
-## Security note
-
-API routes expose **fictional demo data only**. Production features require access control, authenticated customer ownership checks, rate limiting, request tracing, and explicit approval for sensitive actions.
+Run `supabase/migrations/202611090001_phase3_knowledge_rag.sql` after the Phase 2 migration. Then add your **private** `GOOGLE_API_KEY` to `backend/.env`. Do not commit your credentials. Live Google/Supabase checks require your configured project.

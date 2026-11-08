@@ -16,7 +16,7 @@ export async function workspaceRequest<T>(path: string, init: RequestInit = {}):
   const response = await fetch(`${ROOT}/api/v1/workspace${path}`, {
     ...init,
     cache: "no-store",
-    headers: { ...(init.body ? {"Content-Type": "application/json"} : {}),
+    headers: { ...(init.body && !(init.body instanceof FormData) ? {"Content-Type": "application/json"} : {}),
       Authorization: `Bearer ${data.session.access_token}`,
       ...(init.headers || {}) },
   });

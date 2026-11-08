@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
+from app.api.knowledge import router as knowledge_router
 from app.api.workspace import router as workspace_router
 from app.core.config import agent_mode
 
@@ -14,6 +15,7 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 app.include_router(router)
+app.include_router(knowledge_router)
 app.include_router(workspace_router)
 
 @app.get("/health", tags=["Health"])
