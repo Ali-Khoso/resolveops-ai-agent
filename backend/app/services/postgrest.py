@@ -6,8 +6,8 @@ from fastapi import HTTPException
 
 from app.core.supabase import CurrentUser, get_config
 
-TABLES = frozenset({"profiles", "customers", "orders", "tickets", "ticket_messages", "knowledge_documents", "knowledge_chunks"})
-RPC_FUNCTIONS = frozenset({"match_policy_chunks"})
+TABLES = frozenset({"profiles", "customers", "orders", "tickets", "ticket_messages", "knowledge_documents", "knowledge_chunks", "agent_runs", "approval_requests", "operation_audit_events"})
+RPC_FUNCTIONS = frozenset({"match_policy_chunks", "decide_approval"})
 
 
 async def query(

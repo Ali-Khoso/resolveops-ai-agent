@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 from app.api.knowledge import router as knowledge_router
 from app.api.workspace import router as workspace_router
+from app.api.operations import router as operations_router
 from app.core.config import agent_mode
 
 app = FastAPI(title="ResolveOps AI Agent", version="0.1.0", description="Local Phase 1 demo; no real order or refund actions")
@@ -17,6 +18,7 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(knowledge_router)
 app.include_router(workspace_router)
+app.include_router(operations_router)
 
 @app.get("/health", tags=["Health"])
 def health():
