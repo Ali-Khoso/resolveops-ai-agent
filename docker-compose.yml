@@ -1,0 +1,17 @@
+# Local demo only. Configure backend/.env and public build args in root .env.
+services:
+  api:
+    build: ./backend
+    env_file: ./backend/.env
+    ports: ["127.0.0.1:8000:8000"]
+    environment:
+      FRONTEND_ORIGIN: http://localhost:3000
+  web:
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL
+        - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: [api]

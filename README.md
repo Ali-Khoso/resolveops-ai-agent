@@ -87,3 +87,10 @@ For Supabase functionality add the URL and publishable key to **both** `.env` fi
 - Full setup and test guide: [Phase 3 setup](docs/PHASE3_SETUP.md).
 
 Run `supabase/migrations/202611090001_phase3_knowledge_rag.sql` after the Phase 2 migration. Then add your **private** `GOOGLE_API_KEY` to `backend/.env`. Do not commit your credentials. Live Google/Supabase checks require your configured project.
+
+## Agent Operations (Phases 4–7)
+
+The authenticated `/operations` interface supports LangGraph ticket investigations,
+policy-supported internal drafts, approval requests, audit history and analytics.
+See [Phase 4–7 setup](docs/PHASE4_7_SETUP.md) before configuring Supabase and Gemini.
+**No external email or payment refunds are implemented.**

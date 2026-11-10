@@ -1,0 +1,22 @@
+name: Docker build smoke
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f backend/Dockerfile ./backend -t resolveops-api:check
+      - name: Build web image (public placeholders)
+        run: |
+          docker build -f frontend/Dockerfile ./frontend \
+            --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co \
+            --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_placeholder \
+            -t resolveops-web:check
