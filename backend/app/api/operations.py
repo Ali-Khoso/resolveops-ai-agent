@@ -12,6 +12,7 @@ from app.agents.resolution_graph import investigate
 from app.agents.settings import workflow_timeout_seconds
 from app.core.supabase import CurrentUser, get_current_user
 from app.models.operations import ApprovalCreate, ApprovalDecision, InvestigationCreate
+from app.services.approval_policy import validate_approval_action
 from app.services.postgrest import owner_filter, query, rpc
 
 logger = logging.getLogger(__name__)
@@ -85,14 +86,14 @@ async def get_investigation(run_id: UUID, user: CurrentUser = Depends(get_curren
 
 @router.post("/approvals", status_code=201)
 async def create_approval(payload: ApprovalCreate, user: CurrentUser = Depends(get_current_user)):
-    await owned_ticket(user, payload.ticket_id)
+    ticket = await owned_ticket(user, payload.ticket_id)
+    run = None
     if payload.run_id:
         run = require_one(await query(user, "agent_runs", params=owner_filter(
             user, id=f"eq.{payload.run_id}", ticket_id=f"eq.{payload.ticket_id}",
-            select="id,requires_approval", limit=1
+            select="id,intent,status,requires_approval", limit=1
         )), "Investigation not found")
-        if not run.get("requires_approval"):
-            raise HTTPException(status_code=422, detail="This investigation does not require approval")
+    validate_approval_action(payload.action_type, ticket, run)
     return require_one(await query(user, "approval_requests", method="POST", data={
         "owner_id": user.id, "ticket_id": str(payload.ticket_id),
         "run_id": str(payload.run_id) if payload.run_id else None,
