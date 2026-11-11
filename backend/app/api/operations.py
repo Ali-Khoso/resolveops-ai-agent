@@ -58,6 +58,8 @@ async def start_investigation(payload: InvestigationCreate, user: CurrentUser = 
         "response": state["draft"][:10000],
         "order_snapshot": state.get("order") or {},
         "sources": state.get("sources", []),
+        "workflow_steps": state.get("steps", [])[:24],
+        "review_flags": state.get("risk_flags", [])[:16],
         "requires_approval": state.get("requires_approval", False),
         "status": "pending_approval" if state.get("requires_approval") else "completed",
         "duration_ms": duration_ms,
@@ -71,7 +73,7 @@ async def list_investigations(limit: int = Query(50, ge=1, le=100),
                               offset: int = Query(0, ge=0),
                               user: CurrentUser = Depends(get_current_user)):
     return {"items": await query(user, "agent_runs", params=owner_filter(
-        user, select="id,ticket_id,intent,question,response,sources,requires_approval,status,duration_ms,created_at",
+        user, select="id,ticket_id,intent,question,response,sources,workflow_steps,review_flags,requires_approval,status,duration_ms,created_at",
         order="created_at.desc", limit=limit, offset=offset
     ))}
 
