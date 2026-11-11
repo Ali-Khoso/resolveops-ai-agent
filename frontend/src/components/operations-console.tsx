@@ -118,6 +118,16 @@ export default function OperationsConsole({initialTab="investigations"}:{initial
       <section className="ops-panel"><h2>Draft and approval</h2>
         {!current?<p>Select or run an investigation to review the draft.</p>:<>
           <div className="ops-draft">{current.response}</div>
+          {(current.review_flags?.length??0)>0&&
+            <div className="ops-citation" role="status">
+              <b>Human review flags</b>
+              <ul>{current.review_flags?.map(flag=><li key={flag}>{flag.replaceAll("_"," ")}</li>)}</ul>
+            </div>}
+          {(current.workflow_steps?.length??0)>0&&
+            <details className="ops-citation">
+              <summary>Investigation workflow trace</summary>
+              <ol>{current.workflow_steps?.map((step,index)=><li key={index}>{step}</li>)}</ol>
+            </details>}
           {current.sources?.map((s,i)=><div className="ops-citation" key={i}>
             <b>{s.citation} {s.title}</b><p>{s.excerpt}</p></div>)}
           <form className="ops-form" onSubmit={request}>

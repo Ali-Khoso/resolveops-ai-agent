@@ -3,6 +3,7 @@ import { workspaceRequest } from "@/lib/workspace-api";
 export type Run = {
   id:string; ticket_id:string; question:string; intent:string; response:string;
   duration_ms:number; status:string; requires_approval:boolean;
+  workflow_steps?:string[]; review_flags?:string[];
   sources:Array<{citation:string;title:string;excerpt:string}>;created_at:string
 };
 export type Approval = {id:string;ticket_id:string;run_id:string|null;
