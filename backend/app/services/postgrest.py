@@ -74,9 +74,15 @@ async def rpc(user: CurrentUser, function_name: str, payload: dict[str, Any]) ->
     except httpx.RequestError as exc:
         raise HTTPException(status_code=503, detail="Knowledge search temporarily unavailable") from exc
     if response.status_code in (401, 403):
-        raise HTTPException(status_code=403, detail="Knowledge search access denied")
+        raise HTTPException(status_code=403, detail="Database operation access denied")
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="Requested database record not found")
+    if response.status_code == 409:
+        raise HTTPException(status_code=409, detail="Database operation conflicts with current state")
+    if response.status_code == 422:
+        raise HTTPException(status_code=422, detail="Database rejected this operation")
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail="Knowledge search failed")
+        raise HTTPException(status_code=502, detail="Database operation failed")
     rows = response.json()
     if not isinstance(rows, list):
         raise HTTPException(status_code=502, detail="Unexpected knowledge search response")
