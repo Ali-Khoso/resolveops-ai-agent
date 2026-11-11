@@ -72,7 +72,9 @@ def make_workflow(user: CurrentUser):
         try:
             result = await answer_policy(user, PolicyQuestion(question=state["question"], top_k=4))
         except HTTPException as exc:
-            if exc.status_code in (404, 422):
+            # Never hide authorization, validation or rate-limit errors.
+            # Only upstream/provider unavailability receives a human-review fallback.
+            if exc.status_code not in (502, 503, 504):
                 raise
             return {
                 "policy_answer": "Policy search unavailable. Human review is required.",
