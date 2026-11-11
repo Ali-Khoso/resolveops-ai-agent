@@ -1,6 +1,7 @@
 """Authenticated investigation, human approval, and analytics API."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from time import perf_counter
 from uuid import UUID
@@ -8,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.agents.resolution_graph import investigate
+from app.agents.settings import workflow_timeout_seconds
 from app.core.supabase import CurrentUser, get_current_user
 from app.models.operations import ApprovalCreate, ApprovalDecision, InvestigationCreate
 from app.services.postgrest import owner_filter, query, rpc
@@ -35,7 +37,12 @@ async def start_investigation(payload: InvestigationCreate, user: CurrentUser = 
     await owned_ticket(user, payload.ticket_id)
     start = perf_counter()
     try:
-        state = await investigate(user, payload.ticket_id, payload.question)
+        state = await asyncio.wait_for(
+            investigate(user, payload.ticket_id, payload.question),
+            timeout=workflow_timeout_seconds(),
+        )
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(status_code=504, detail="Investigation timed out; please retry") from exc
     except HTTPException:
         raise
     except Exception as exc:
