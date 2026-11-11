@@ -13,6 +13,7 @@ from fastapi import HTTPException
 
 from app.agents.intent import classify_intent, suggested_action, needs_policy_retrieval
 from app.agents.present import safe_display
+from app.agents.risks import assess_risks
 from app.core.supabase import CurrentUser
 from app.rag.answer import NO_EVIDENCE, PolicyQuestion, answer_policy
 from app.services.postgrest import owner_filter, query
@@ -28,6 +29,7 @@ class InvestigationState(TypedDict, total=False):
     policy_answer: str
     sources: list[dict[str, Any]]
     grounded: bool
+    risk_flags: list[str]
     draft: str
     suggested_action: str | None
     requires_approval: bool
@@ -112,10 +114,17 @@ def make_workflow(user: CurrentUser):
             lines.append("Refund requested. Human eligibility and payment review required. No refund issued.")
         if state["intent"] == "escalation":
             lines.append("Escalation requested. Human supervisor review required.")
+        flags = assess_risks(
+            intent=state["intent"], has_order=bool(order),
+            grounded=bool(state.get("grounded", False)),
+        )
+        if flags:
+            lines.append("Internal review flags: " + ", ".join(flags))
         recommendation = suggested_action(state["intent"], state["question"])
         return {
             "draft": "\n\n".join(lines),
             "suggested_action": recommendation,
+            "risk_flags": flags,
             "requires_approval": recommendation is not None,
             "steps": state["steps"] + (["policy_skipped:not_needed"] if not needs_policy_retrieval(state["intent"]) else []) + ["drafted_internal_response"],
         }
