@@ -12,6 +12,7 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from app.agents.intent import classify_intent, suggested_action, needs_policy_retrieval
+from app.agents.present import safe_display
 from app.core.supabase import CurrentUser
 from app.rag.answer import NO_EVIDENCE, PolicyQuestion, answer_policy
 from app.services.postgrest import owner_filter, query
@@ -89,16 +90,16 @@ def make_workflow(user: CurrentUser):
         ticket = state.get("ticket") or {}
         if ticket:
             lines.append(
-                "Ticket context: " + str(ticket.get("subject", "Untitled"))[:120]
-                + " | status=" + str(ticket.get("status", "unknown"))[:30]
-                + " | priority=" + str(ticket.get("priority", "normal"))[:30]
+                "Ticket context: " + safe_display(ticket.get("subject", "Untitled"), 120)
+                + " | status=" + safe_display(ticket.get("status", "unknown"), 30)
+                + " | priority=" + safe_display(ticket.get("priority", "normal"), 30)
             )
         if order:
-            lines.append(f"Recorded status of {order.get('item','item')}: {order.get('status','unknown')}.")
+            lines.append(f"Recorded status of {safe_display(order.get('item', 'item'), 160)}: {safe_display(order.get('status', 'unknown'), 30)}.")
             if order.get("tracking_number"):
-                lines.append("Tracking number: " + str(order["tracking_number"]))
+                lines.append("Tracking number: " + safe_display(order["tracking_number"], 80))
             if order.get("estimated_delivery"):
-                lines.append("Recorded ETA: " + str(order["estimated_delivery"]))
+                lines.append("Recorded ETA: " + safe_display(order["estimated_delivery"], 40))
         else:
             lines.append("No attached owned order found. Confirm details with the customer.")
         if not needs_policy_retrieval(state["intent"]):
