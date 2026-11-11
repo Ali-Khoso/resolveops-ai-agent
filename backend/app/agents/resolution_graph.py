@@ -6,12 +6,12 @@ from the model or HTTP request payload. No real refund or email tools exist.
 from __future__ import annotations
 
 import os
-import re
 from typing import Any, TypedDict
 from uuid import UUID
 
 from fastapi import HTTPException
 
+from app.agents.intent import classify_intent, suggested_action
 from app.core.supabase import CurrentUser
 from app.rag.answer import NO_EVIDENCE, PolicyQuestion, answer_policy
 from app.services.postgrest import owner_filter, query
@@ -30,29 +30,6 @@ class InvestigationState(TypedDict, total=False):
     suggested_action: str | None
     requires_approval: bool
     steps: list[str]
-
-
-def classify_intent(message: str) -> str:
-    text = message.lower()
-    if re.search(r"\b(refund|reimburse|money back|chargeback|return)\b", text):
-        return "refund"
-    if re.search(r"\b(escalat|supervisor|manager|complain|urgent)\w*\b", text):
-        return "escalation"
-    if re.search(r"\b(order|delivery|shipment|tracking|package|where is)\b", text):
-        return "order"
-    if re.search(r"\b(policy|terms|warranty|how long|eligible|rule)\b", text):
-        return "policy"
-    return "general"
-
-
-def suggested_action(intent: str, question: str) -> str | None:
-    if intent == "refund":
-        return "refund_review"
-    if intent == "escalation":
-        return "send_reply"
-    if re.search(r"\b(resolve|close ticket|mark resolved)\b", question, re.I):
-        return "resolve_ticket"
-    return None
 
 
 def make_workflow(user: CurrentUser):
