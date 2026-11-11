@@ -134,11 +134,15 @@ async def decide(approval_id: UUID, payload: ApprovalDecision, user: CurrentUser
 
 
 @router.get("/audit")
-async def audit(limit: int = Query(50, ge=1, le=100), user: CurrentUser = Depends(get_current_user)):
+async def audit(limit: int = Query(50, ge=1, le=100),
+                offset: int = Query(0, ge=0),
+                approval_id: UUID | None = None,
+                user: CurrentUser = Depends(get_current_user)):
+    filters = {"approval_id": f"eq.{approval_id}"} if approval_id else {}
     return {"items": await query(user, "operation_audit_events", params=owner_filter(
-        user, select="id,approval_id,action_type,decision,actor_id,created_at",
-        order="created_at.desc", limit=limit,
-    ))}
+        user, **filters, select="id,approval_id,action_type,decision,actor_id,created_at",
+        order="created_at.desc", limit=limit, offset=offset,
+    )), "limit": limit, "offset": offset}
 
 
 @router.get("/analytics")
