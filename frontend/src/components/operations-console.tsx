@@ -14,6 +14,7 @@ export default function OperationsConsole({initialTab="investigations"}:{initial
   const [tickets,setTickets]=useState<Ticket[]>([]);
   const [runs,setRuns]=useState<Run[]>([]);
   const [approvals,setApprovals]=useState<Approval[]>([]);
+  const [approvalFilter,setApprovalFilter]=useState<"all"|Approval["status"]>("pending");
   const [audit,setAudit]=useState<Audit[]>([]);
   const [stats,setStats]=useState<Analytics|null>(null);
   const [current,setCurrent]=useState<Run|null>(null);
@@ -147,16 +148,36 @@ export default function OperationsConsole({initialTab="investigations"}:{initial
     </div>}
     {!loading&&tab==="approvals"&&<section className="ops-panel">
       <h2>Human approval queue</h2>
-      {approvals.length===0?<p>No requests yet.</p>:approvals.map(a=>
+      <label className="ops-queue-filter">Show reviews
+        <select aria-label="Filter approvals" value={approvalFilter}
+          onChange={e=>setApprovalFilter(e.target.value as "all"|Approval["status"])}>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="all">All statuses</option>
+        </select>
+      </label>
+      {approvals.filter(a=>approvalFilter==="all"||a.status===approvalFilter).length===0?
+        <p>No {approvalFilter==="all"?"":approvalFilter+" "}requests found.</p>:
+        approvals.filter(a=>approvalFilter==="all"||a.status===approvalFilter).map(a=>
         <article key={a.id} className="ops-approval">
-          <div><b>{a.action_type.replaceAll("_"," ")} · {a.status}</b>
-            <p>{a.draft_reply}</p><small>{a.reason}</small></div>
+          <div className="ops-review-body">
+            <b>{a.action_type.replaceAll("_"," ")} · {a.status}</b>
+            <p>{a.draft_reply}</p>
+            <details className="ops-review-details">
+              <summary>Review context and decision history</summary>
+              <p><b>Why review?</b> {a.reason}</p>
+              <p><b>Ticket:</b> {tickets.find(t=>t.id===a.ticket_id)?.subject??"Ticket unavailable"}</p>
+              {a.decision_note&&<p><b>Decision note:</b> {a.decision_note}</p>}
+              {a.decided_at&&<p><b>Decided:</b> {new Date(a.decided_at).toLocaleString()}</p>}
+            </details>
+          </div>
           {a.status==="pending"&&<div className="ops-actions">
             <button disabled={busy} onClick={()=>decision(a,"approved")}>Approve</button>
             <button disabled={busy} onClick={()=>decision(a,"rejected")}>Reject</button>
           </div>}
         </article>)}
-    </section>}
+    </section>
     {!loading&&tab==="analytics"&&<div className="ops-columns">
       <section className="ops-panel"><h2>Ticket analytics</h2>
         <p>Open: {stats?.open_tickets??0}</p>
