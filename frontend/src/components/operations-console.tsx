@@ -15,6 +15,7 @@ export default function OperationsConsole({initialTab="investigations"}:{initial
   const [runs,setRuns]=useState<Run[]>([]);
   const [approvals,setApprovals]=useState<Approval[]>([]);
   const [approvalFilter,setApprovalFilter]=useState<"all"|Approval["status"]>("pending");
+  const [reviewNotes,setReviewNotes]=useState<Record<string,string>>({});
   const [audit,setAudit]=useState<Audit[]>([]);
   const [stats,setStats]=useState<Analytics|null>(null);
   const [current,setCurrent]=useState<Run|null>(null);
@@ -72,8 +73,18 @@ export default function OperationsConsole({initialTab="investigations"}:{initial
     });
   }
   function decision(item:Approval,value:"approved"|"rejected"){
-    if(!window.confirm("Record "+value+" decision? This is an internal action only."))return;
-    void act(async()=>{await decide(item.id,value);setNotice("Decision recorded in audit history.");});
+    const note=(reviewNotes[item.id]??"").trim();
+    const noteRequired=value==="rejected"||(value==="approved"&&item.action_type==="refund_review");
+    if(noteRequired&&!note){
+      setError(value==="rejected"?"Enter a reason before rejecting.":"Refund reviews require a written approval rationale.");
+      return;
+    }
+    if(!window.confirm("Record "+value+" decision? No customer email or payment refund will be sent."))return;
+    void act(async()=>{
+      await decide(item.id,value,note||undefined);
+      setReviewNotes(prev=>({...prev,[item.id]:""}));
+      setNotice("Decision saved to the internal audit log. No external action occurred.");
+    });
   }
   return <main className="ops-root">
     <header className="ops-nav"><Link href="/workspace">✦ ResolveOps / Operations</Link><nav>
@@ -172,10 +183,21 @@ export default function OperationsConsole({initialTab="investigations"}:{initial
               {a.decided_at&&<p><b>Decided:</b> {new Date(a.decided_at).toLocaleString()}</p>}
             </details>
           </div>
-          {a.status==="pending"&&<div className="ops-actions">
-            <button disabled={busy} onClick={()=>decision(a,"approved")}>Approve</button>
-            <button disabled={busy} onClick={()=>decision(a,"rejected")}>Reject</button>
-          </div>}
+          {a.status==="pending"&&<div className="ops-review-action-panel">
+            <label htmlFor={"review-note-"+a.id}>Decision note
+              <span> (required to reject{a.action_type==="refund_review"?" or approve a refund review":""})</span>
+            </label>
+            <textarea id={"review-note-"+a.id} maxLength={1000} rows={3}
+              value={reviewNotes[a.id]??""}
+              onChange={e=>setReviewNotes(prev=>({...prev,[a.id]:e.target.value}))}
+              placeholder="Record your rationale for the audit trail"/>
+            <div className="ops-actions">
+              <button disabled={busy||a.action_type==="refund_review"&&!(reviewNotes[a.id]??"").trim()}
+                onClick={()=>decision(a,"approved")}>Approve internally</button>
+              <button disabled={busy||!(reviewNotes[a.id]??"").trim()}
+                onClick={()=>decision(a,"rejected")}>Reject with reason</button>
+            </div>
+          </div>
         </article>)}
     </section>
     {!loading&&tab==="analytics"&&<div className="ops-columns">
