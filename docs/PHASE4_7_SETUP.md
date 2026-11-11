@@ -8,6 +8,7 @@ production database records or live customer credentials are stored in Git.
 - Gemini key from https://aistudio.google.com/apikey (for policy RAG)
 - Backend: copy backend/.env.example to backend/.env. Set SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY, GOOGLE_API_KEY, FRONTEND_ORIGIN, AGENT_MODE.
+- Optional `GRAPH_TIMEOUT_SECONDS=30` (allowed: 5–120) bounds each investigation.
 - Frontend: copy frontend/.env.example to frontend/.env.local. Set
   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   NEXT_PUBLIC_API_URL=http://127.0.0.1:8000.
@@ -18,6 +19,7 @@ Run these migrations in the Supabase SQL Editor, in order:
 1. supabase/migrations/202611070001_phase2_workspaces.sql
 2. supabase/migrations/202611090001_phase3_knowledge_rag.sql
 3. supabase/migrations/202611100001_phase4_5_operations.sql
+4. supabase/migrations/202611110001_phase4_agent_trace.sql
 
 The last migration creates per-user investigations, approval requests, audit
 records and an atomic approval-decision function. No real refunds are executed.
@@ -48,3 +50,13 @@ Run docker compose up --build.
 - Deploying for real customers requires production security review, rate
   limiting, TLS, logging redaction, separate reviewer permissions, backups,
   action idempotency, load tests and live integration verification.
+
+## Phase 4 workflow validation
+- Read [Phase 4 workflow engineering](PHASE4_WORKFLOWS.md) for routing and risk policy.
+- Start at `/operations` after signing in; attach a synthetic order to a ticket.
+- Ask an order-tracking question and verify the run skips policy retrieval.
+- Ask a refund question and verify policy retrieval runs (requires Gemini key).
+- Inspect `review_flags` and `workflow_steps` for the saved investigation.
+- A failed provider call must not produce an invented refund promise.
+- Confirm requests with another user's JWT never return your ticket or run.
+- Test failure paths without running live refunds, customer emails or payments.

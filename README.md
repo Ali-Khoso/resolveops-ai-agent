@@ -94,3 +94,7 @@ The authenticated `/operations` interface supports LangGraph ticket investigatio
 policy-supported internal drafts, approval requests, audit history and analytics.
 See [Phase 4–7 setup](docs/PHASE4_7_SETUP.md) before configuring Supabase and Gemini.
 **No external email or payment refunds are implemented.**
+
+### LangGraph workflow documentation
+
+See [Phase 4 engineering and safety guide](docs/PHASE4_WORKFLOWS.md) and [Phase 4–7 configuration](docs/PHASE4_7_SETUP.md). Run the extra Phase 4 trace migration before starting new investigations.
