@@ -22,6 +22,7 @@ class InvestigationState(TypedDict, total=False):
     question: str
     intent: str
     owner_id: str
+    ticket: dict[str, Any]
     order: dict[str, Any] | None
     policy_answer: str
     sources: list[dict[str, Any]]
@@ -44,7 +45,7 @@ def make_workflow(user: CurrentUser):
 
     async def lookup(state: InvestigationState) -> dict:
         tickets = await query(user, "tickets", params=owner_filter(
-            user, id=f"eq.{state['ticket_id']}", select="id,order_id", limit=1
+            user, id=f"eq.{state['ticket_id']}", select="id,order_id,subject,status,priority", limit=1
         ))
         if not tickets:
             raise HTTPException(status_code=404, detail="Ticket not found")
@@ -56,7 +57,7 @@ def make_workflow(user: CurrentUser):
                 select="id,item,status,tracking_number,estimated_delivery", limit=1
             ))
             order = rows[0] if rows else None
-        return {"order": order, "steps": state["steps"] + ["looked_up_owned_order"]}
+        return {"ticket": tickets[0], "order": order, "steps": state["steps"] + ["looked_up_owned_ticket", "looked_up_owned_order"]}
 
     async def policy(state: InvestigationState) -> dict:
         if not os.getenv("GOOGLE_API_KEY"):
@@ -85,6 +86,13 @@ def make_workflow(user: CurrentUser):
     async def draft(state: InvestigationState) -> dict:
         order = state.get("order")
         lines = ["INTERNAL DRAFT — human review required before customer use."]
+        ticket = state.get("ticket") or {}
+        if ticket:
+            lines.append(
+                "Ticket context: " + str(ticket.get("subject", "Untitled"))[:120]
+                + " | status=" + str(ticket.get("status", "unknown"))[:30]
+                + " | priority=" + str(ticket.get("priority", "normal"))[:30]
+            )
         if order:
             lines.append(f"Recorded status of {order.get('item','item')}: {order.get('status','unknown')}.")
             if order.get("tracking_number"):
