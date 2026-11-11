@@ -197,9 +197,9 @@ export default function OperationsConsole({initialTab="investigations"}:{initial
               <button disabled={busy||!(reviewNotes[a.id]??"").trim()}
                 onClick={()=>decision(a,"rejected")}>Reject with reason</button>
             </div>
-          </div>
+          </div>}
         </article>)}
-    </section>
+    </section>}
     {!loading&&tab==="analytics"&&<div className="ops-columns">
       <section className="ops-panel"><h2>Ticket analytics</h2>
         <p>Open: {stats?.open_tickets??0}</p>

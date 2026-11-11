@@ -98,3 +98,16 @@ See [Phase 4–7 setup](docs/PHASE4_7_SETUP.md) before configuring Supabase and 
 ### LangGraph workflow documentation
 
 See [Phase 4 engineering and safety guide](docs/PHASE4_WORKFLOWS.md) and [Phase 4–7 configuration](docs/PHASE4_7_SETUP.md). Run the extra Phase 4 trace migration before starting new investigations.
+
+## Phase 5 — Internal approval and review workflows
+
+Approve or reject internal actions from the `/operations` review queue. The backend
+and database both validate refund-review requests, block closed-ticket actions,
+and require documented rejection reasons. Repeated identical decisions return the
+existing result; conflicting decisions are rejected. Decisions are recorded in an
+audit history. **These records do not issue actual refunds or send emails.**
+
+Read [Phase 5 approval guide](docs/PHASE5_APPROVALS.md) and apply the additional
+`supabase/migrations/202611120001_phase5_approval_guardrails.sql` migration.
+This educational single-account workflow is **not** independent two-person
+authorization; do not use it as a production payments approval mechanism.
