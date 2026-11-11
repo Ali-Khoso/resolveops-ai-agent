@@ -20,9 +20,12 @@ Run these migrations in the Supabase SQL Editor, in order:
 2. supabase/migrations/202611090001_phase3_knowledge_rag.sql
 3. supabase/migrations/202611100001_phase4_5_operations.sql
 4. supabase/migrations/202611110001_phase4_agent_trace.sql
+5. supabase/migrations/202611120001_phase5_approval_guardrails.sql
 
-The last migration creates per-user investigations, approval requests, audit
-records and an atomic approval-decision function. No real refunds are executed.
+Phase 4 introduces per-user investigations, approvals and audit events.
+The new Phase 5 migration validates direct PostgREST inserts and makes decisions
+idempotent with conflict responses. Existing requests are preserved. No actual
+refunds or outgoing customer emails are executed.
 
 ## Run locally
 Backend: install backend/requirements.txt in a Python 3.11+ venv, run
@@ -60,3 +63,11 @@ Run docker compose up --build.
 - A failed provider call must not produce an invented refund promise.
 - Confirm requests with another user's JWT never return your ticket or run.
 - Test failure paths without running live refunds, customer emails or payments.
+
+## Phase 5 review checklist
+- See [Phase 5 approval workflows](PHASE5_APPROVALS.md) for allowed actions and HTTP examples.
+- A `refund_review` approval requires a saved refund investigation that is awaiting approval.
+- Rejecting any approval requires a written reason. Approving a refund review also requires a note.
+- The queue can be filtered by status; decision history is available from `/audit`.
+- Apply **all five migrations** before using the latest approval endpoints.
+- These are per-user manual reviews, not a two-person RBAC approval system.
