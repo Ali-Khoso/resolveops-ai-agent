@@ -1,7 +1,7 @@
 """Validated models for agent investigations and human review."""
 from typing import Literal
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -20,3 +20,11 @@ class ApprovalCreate(StrictModel):
 class ApprovalDecision(StrictModel):
     decision: Literal["approved", "rejected"]
     note: str | None = Field(default=None, max_length=1000)
+
+    @model_validator(mode="after")
+    def require_rejection_reason(self) -> "ApprovalDecision":
+        if self.note is not None:
+            self.note = self.note.strip() or None
+        if self.decision == "rejected" and not self.note:
+            raise ValueError("A rejection reason is required")
+        return self
