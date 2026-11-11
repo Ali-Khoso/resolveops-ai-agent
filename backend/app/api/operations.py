@@ -106,11 +106,21 @@ async def create_approval(payload: ApprovalCreate, user: CurrentUser = Depends(g
 @router.get("/approvals")
 async def list_approvals(status: str | None = Query(default=None, pattern="^(pending|approved|rejected)$"),
                          limit: int = Query(50, ge=1, le=100),
+                         offset: int = Query(0, ge=0),
                          user: CurrentUser = Depends(get_current_user)):
     filters = {"status": f"eq.{status}"} if status else {}
     return {"items": await query(user, "approval_requests", params=owner_filter(
-        user, **filters, order="created_at.desc", limit=limit
-    ))}
+        user, **filters, order="created_at.desc", limit=limit, offset=offset
+    )), "limit": limit, "offset": offset}
+
+
+@router.get("/approvals/{approval_id}")
+async def get_approval(approval_id: UUID, user: CurrentUser = Depends(get_current_user)):
+    """Retrieve exactly one owned approval; RLS remains authoritative."""
+    return require_one(await query(
+        user, "approval_requests",
+        params=owner_filter(user, id=f"eq.{approval_id}", limit=1),
+    ), "Approval not found")
 
 
 @router.post("/approvals/{approval_id}/decision")
