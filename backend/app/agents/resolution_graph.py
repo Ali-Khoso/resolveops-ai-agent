@@ -11,7 +11,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
-from app.agents.intent import classify_intent, suggested_action
+from app.agents.intent import classify_intent, suggested_action, needs_policy_retrieval
 from app.core.supabase import CurrentUser
 from app.rag.answer import NO_EVIDENCE, PolicyQuestion, answer_policy
 from app.services.postgrest import owner_filter, query
@@ -93,7 +93,9 @@ def make_workflow(user: CurrentUser):
                 lines.append("Recorded ETA: " + str(order["estimated_delivery"]))
         else:
             lines.append("No attached owned order found. Confirm details with the customer.")
-        if state.get("grounded"):
+        if not needs_policy_retrieval(state["intent"]):
+            lines.append("Policy search was not needed for this request.")
+        elif state.get("grounded"):
             lines.append("Policy evidence: " + state.get("policy_answer", NO_EVIDENCE))
         else:
             lines.append("No verified policy evidence; do not promise a refund or outcome.")
@@ -106,7 +108,7 @@ def make_workflow(user: CurrentUser):
             "draft": "\n\n".join(lines),
             "suggested_action": recommendation,
             "requires_approval": recommendation is not None,
-            "steps": state["steps"] + ["drafted_internal_response"],
+            "steps": state["steps"] + (["policy_skipped:not_needed"] if not needs_policy_retrieval(state["intent"]) else []) + ["drafted_internal_response"],
         }
 
     graph = StateGraph(InvestigationState)
@@ -114,7 +116,13 @@ def make_workflow(user: CurrentUser):
         graph.add_node(name, node)
     graph.add_edge(START, "classify")
     graph.add_edge("classify", "lookup")
-    graph.add_edge("lookup", "policy")
+    # Order tracking and escalation need no policy API call.
+    # Refund, policy and general questions still gather policy evidence.
+    graph.add_conditional_edges(
+        "lookup",
+        lambda state: "policy" if needs_policy_retrieval(state["intent"]) else "draft",
+        {"policy": "policy", "draft": "draft"},
+    )
     graph.add_edge("policy", "draft")
     graph.add_edge("draft", END)
     return graph.compile()

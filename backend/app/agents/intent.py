@@ -34,3 +34,8 @@ def suggested_action(intent: str, question: str) -> str | None:
     if _RESOLVE.search(question):
         return "resolve_ticket"
     return None
+
+
+def needs_policy_retrieval(intent: str) -> bool:
+    """Only run vector search for intents that can benefit from policy evidence."""
+    return intent in {"refund", "policy", "general"}
