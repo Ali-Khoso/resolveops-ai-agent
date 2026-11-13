@@ -3,7 +3,7 @@ import type {OverviewData} from "@/components/phase6/overview";
 const COLORS=["#b2e37b","#91a9fc","#efc28c","#9a9eb5"];
 
 export default function Insights({data}:{data:OverviewData}){
-  const {tickets,approvals,runs,stats}=data;
+  const {tickets,approvals,stats}=data;
   const priorities=["urgent","high","normal","low"].map(name=>({name,value:tickets.filter(t=>t.priority===name).length}));
   const states=["open","in_progress","resolved","closed"].map(name=>({name,value:tickets.filter(t=>t.status===name).length}));
   const approvalStates=["pending","approved","rejected"].map(name=>({name,value:approvals.filter(a=>a.status===name).length}));

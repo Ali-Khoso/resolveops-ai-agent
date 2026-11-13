@@ -1,20 +1,47 @@
-# ResolveOps — AI Support & Order Resolution Platform
+# ResolveOps — AI Support & Order Resolution
 
-Production-minded portfolio application for a support operations team: FastAPI, LangChain/Gemini, Next.js, Supabase Auth + Postgres + RLS, and testable API workflows.
+A full-stack portfolio project for assisted customer support: **Next.js 16 + FastAPI + LangChain/Gemini + LangGraph + Supabase Auth/Postgres + pgvector**. It demonstrates policy-grounded investigations and explicit human approval before internal support actions.
 
-**Status:** Phase 1 demo and Phase 2 authenticated-workspace implementation are in the repository. Phase 3 (company-policy RAG) and subsequent LangGraph workflows are not implemented.
+**Project status:** Phases **1–6 coded**. Phase 7 production hardening and live end-to-end verification remain. Real refunds and outbound customer emails are **not implemented**.
 
-## What you can do
+## Phase 6 — Dashboard and UI
 
-- **Public Phase 1 demo (`/`):** ask about three fictional orders in offline demo mode, or optionally enable LangChain/Gemini tool calling with a private key.
-- **Private Phase 2 workspace (`/login` → `/workspace`):** email/password signup and login through Supabase; create and review customers, orders and support tickets; change ticket status; write internal notes.
-- **REST APIs:** token verification against Supabase Auth, user-scoped PostgREST access, request validation, pagination and RLS.
-- **PostgreSQL migration:** `supabase/migrations/202611070001_phase2_workspaces.sql` creates tables, profile signup trigger, composite ownership checks and RLS policies.
-- **Tests:** backend checks work without cloud credentials; GitHub Actions runs `pytest` in demo mode.
+The new interface has a responsive dark workspace shell, useful empty/loading/error states, customer ticket search and filtering, owner-scoped analytics, review-aware activity, and an interactive sample showcase.
 
-## Quick start
+| Page | Purpose |
+| --- | --- |
+| `/showcase` | Public synthetic-data overview preview (no credentials) |
+| `/showcase/tickets` | Public interactive ticket explorer preview |
+| `/showcase/insights` | Public sample analytics preview |
+| `/login` | Supabase email/password authentication |
+| `/dashboard` | Authenticated support KPIs and recent activity |
+| `/tickets` | Authenticated search, status/priority filters, sorting, detail drawer |
+| `/workspace` | Customer, order, ticket and internal note CRUD |
+| `/knowledge` | Upload and query grounded policy knowledge |
+| `/operations` | LangGraph investigation, review queue and audit |
+| `/insights` | Snapshot charts for tickets, priority and approval decisions |
+| `/activity` | Recent owner-scoped investigation and decision timeline |
+| `/docs` | In-app workflow guidance |
 
-Read **[docs/PHASE2_SETUP.md](docs/PHASE2_SETUP.md)** for exact URLs, key locations, database migration, VS Code commands and API routes.
+### Screenshot previews (synthetic sample data)
+
+These are screenshots of the **static Phase 6 design preview**. They do not show a live connected Supabase account. See the [complete step-by-step walkthrough](docs/screenshots/README.md) and the actual `/showcase` routes.
+
+**1. Workspace overview**
+
+![ResolveOps Phase 6 overview preview](docs/screenshots/phase6-overview.webp)
+
+**2. Searchable ticket explorer**
+
+![ResolveOps Phase 6 ticket explorer preview](docs/screenshots/phase6-tickets.webp)
+
+**3. Operations analytics**
+
+![ResolveOps Phase 6 analytics preview](docs/screenshots/phase6-insights.webp)
+
+## Start locally
+
+Clone the repository and open it in VS Code.
 
 ```powershell
 git clone https://github.com/Ali-Khoso/resolveops-ai-agent.git
@@ -22,10 +49,9 @@ cd resolveops-ai-agent
 code .
 ```
 
-Backend (terminal 1):
+**Backend:** Python 3.11+ in `backend/`.
 
 ```powershell
-cd backend
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -34,80 +60,40 @@ python -m pytest -q
 python -m uvicorn app.main:app --reload
 ```
 
-Frontend (terminal 2):
+**Frontend:** Node.js 22+ in `frontend/` (separate terminal).
 
 ```powershell
-cd frontend
 Copy-Item .env.example .env.local
 npm install
+npm run phase6:check
+npm run lint
+npm run build
 npm run dev
 ```
 
-For Supabase functionality add the URL and publishable key to **both** `.env` files and run the migration. Without credentials, the Phase 1 demo still works; `/workspace` does not silently bypass authentication.
+Open [http://localhost:3000/showcase](http://localhost:3000/showcase) for an immediate preview without a cloud account.
 
-## Security boundaries
+For private features, configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `GOOGLE_API_KEY` in the backend environment, with matching public `NEXT_PUBLIC_*` values in the frontend. Use only your own test accounts and synthetic data. Follow [Phase 4–7 credentials/setup](docs/PHASE4_7_SETUP.md), [Phase 5 approval setup](docs/PHASE5_APPROVALS.md) and [Phase 6 walkthrough](docs/PHASE6_SETUP.md). Apply all five SQL migrations in `supabase/migrations/` in order.
 
-- Phase 2 backend accepts an **end-user token** and validates it through Supabase Auth, then forwards the token to PostgREST so RLS can enforce row ownership.
-- The secret/service-role key is **not needed** and must not be added to this project.
-- Each user can see only their own records. Cross-user/cross-customer relationships are prohibited by composite FKs.
-- Ticket messages are internal agent notes; AI cannot issue refunds, write messages or modify real orders yet.
-- User-created records require authentication; public Phase 1 endpoints return **only synthetic** orders.
-- These are portfolio/demo safeguards, not a complete production security review.
+The backend API docs are available at `http://127.0.0.1:8000/docs`.
 
-## Folder layout
+## Architecture and safety
 
-- `backend/app/api/` — FastAPI public demo and authenticated workspace routes
-- `backend/app/core/supabase.py` — token verification + configuration
-- `backend/app/services/postgrest.py` — user-token database transport
-- `backend/app/models/workspace.py` — strict request schemas
-- `backend/app/agents/` and `backend/app/tools/` — LangChain demo agent and order tool
-- `frontend/src/app/login/` and `frontend/src/app/workspace/` — Phase 2 UI
-- `supabase/migrations/` — SQL schema, roles and RLS
-- `docs/` — setup, architecture, and roadmap
+- Authentication: Supabase validates end-user JWTs; PostgREST forwards them to enforce row-level security (RLS).
+- Knowledge: PDF/text policies are chunked, embedded, retrieved with pgvector, and answered with citations.
+- Agent: LangGraph classifies support requests and retrieves owned ticket/order data; high-risk actions are internal drafts requiring human review.
+- Human approval: Approved internal replies create ticket notes; ticket resolution changes local ticket status; refund reviews record a decision **only**.
+- Dashboard: Authenticated pages show currently loaded records. Capped list responses are not full historical aggregates.
+- Public showcase: Deterministic synthetic data, no private API requests or secrets.
+- Offline testing/CI is present, but live production authorization and resilience have not been certified.
 
-## Upcoming phases
+## Documentation
 
-1. Foundation and demo tool-calling — ✅ implemented
-2. Supabase database, authentication, customer/order/ticket CRUD — ✅ code implemented; needs your Supabase project setup
-3. Knowledge base and grounded RAG — planned
-4. LangGraph agent workflows — planned
-5. Human approval and ticket automation — planned
-6. Professional dashboard refinements and advanced UX — planned
-7. Monitoring, deployment, security hardening and evaluations — planned
+- [Architecture](docs/ARCHITECTURE.md)
+- [Development roadmap and remaining Phase 7](docs/ROADMAP.md)
+- [Phase 4 workflow guardrails](docs/PHASE4_WORKFLOWS.md)
+- [Phase 5 internal approvals](docs/PHASE5_APPROVALS.md)
+- [Phase 6 pages and user steps](docs/PHASE6_SETUP.md)
+- [Phase 6 screenshots](docs/screenshots/README.md)
 
-**License:** MIT. Do not use personal or live business data until the remaining authorization, security and compliance work is complete.
-
-## Phase 3 — private company-policy RAG
-
-- Authenticated **Knowledge Base** at `/knowledge`.
-- PDF (text-based), Markdown and TXT upload; LangChain chunking with PDF page citations.
-- Gemini `gemini-embedding-001` (768-dimensional vectors) with Supabase pgvector.
-- Per-user Postgres RLS and **SECURITY INVOKER** semantic search RPC.
-- LangChain/Gemini answers with retrieved source excerpts, citation checks and abstention.
-- Full setup and test guide: [Phase 3 setup](docs/PHASE3_SETUP.md).
-
-Run `supabase/migrations/202611090001_phase3_knowledge_rag.sql` after the Phase 2 migration. Then add your **private** `GOOGLE_API_KEY` to `backend/.env`. Do not commit your credentials. Live Google/Supabase checks require your configured project.
-
-## Agent Operations (Phases 4–7)
-
-The authenticated `/operations` interface supports LangGraph ticket investigations,
-policy-supported internal drafts, approval requests, audit history and analytics.
-See [Phase 4–7 setup](docs/PHASE4_7_SETUP.md) before configuring Supabase and Gemini.
-**No external email or payment refunds are implemented.**
-
-### LangGraph workflow documentation
-
-See [Phase 4 engineering and safety guide](docs/PHASE4_WORKFLOWS.md) and [Phase 4–7 configuration](docs/PHASE4_7_SETUP.md). Run the extra Phase 4 trace migration before starting new investigations.
-
-## Phase 5 — Internal approval and review workflows
-
-Approve or reject internal actions from the `/operations` review queue. The backend
-and database both validate refund-review requests, block closed-ticket actions,
-and require documented rejection reasons. Repeated identical decisions return the
-existing result; conflicting decisions are rejected. Decisions are recorded in an
-audit history. **These records do not issue actual refunds or send emails.**
-
-Read [Phase 5 approval guide](docs/PHASE5_APPROVALS.md) and apply the additional
-`supabase/migrations/202611120001_phase5_approval_guardrails.sql` migration.
-This educational single-account workflow is **not** independent two-person
-authorization; do not use it as a production payments approval mechanism.
+**License:** MIT. Do not use real private customer information until the service has received a full production security assessment.

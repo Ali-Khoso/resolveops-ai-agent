@@ -11,5 +11,5 @@ export default function DocsPage(){return <Phase6Shell active="/docs" eyebrow="S
       {heading:"4. Monitor activity",description:"Use Analytics and Activity to inspect current ticket counts, saved investigations, and decisions.",href:"/insights",icon:ArrowUpRight}
     ].map(item=><div className="p6-panel p6-panel-pad" key={item.heading}><item.icon size={24} color="#b7e08e"/><h2 className="p6-panel-title">{item.heading}</h2><p>{item.description}</p><Link href={item.href} className="p6-text-link">Open feature <ArrowUpRight size={14}/></Link></div>)}
   </div>
-  <div className="p6-panel p6-panel-pad" style={{marginTop:18}}><h2 className="p6-panel-title">Credentials & production safety</h2><p className="p6-panel-caption">Configure Supabase and Gemini with the repository's setup guide. Never commit .env files, real customer credentials, or service-role keys. This is a portfolio demonstration, not a production payment automation service.</p></div>
+  <div className="p6-panel p6-panel-pad" style={{marginTop:18}}><h2 className="p6-panel-title">Credentials & production safety</h2><p className="p6-panel-caption">Configure Supabase and Gemini with the repository&apos;s setup guide. Never commit .env files, real customer credentials, or service-role keys. This is a portfolio demonstration, not a production payment automation service.</p></div>
 </Phase6Shell>;}

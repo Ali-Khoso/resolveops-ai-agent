@@ -15,6 +15,8 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install
+      - name: Validate Phase 6 screenshot and route assets
+        run: npm run phase6:check
       - name: Lint
         run: npm run lint
       - name: Build

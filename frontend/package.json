@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "phase6:check": "node scripts/check-phase6.mjs"
   },
   "dependencies": {
     "next": "^16.0.0",
